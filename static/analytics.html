@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1120" />
+  <title>TableSense — Analytics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" />
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ["Inter", "system-ui", "sans-serif"], mono: ["JetBrains Mono", "ui-monospace", "monospace"] } } } };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/css/app.css" />
+  <link rel="stylesheet" href="/static/css/analytics.css" />
+</head>
+<body class="bg-[#0b1120] text-slate-200 antialiased min-h-screen">
+
+  <header class="sticky top-0 z-30 border-b border-white/5 bg-[#0b1120]/90 backdrop-blur">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 sm:px-5 py-2.5">
+      <a href="/" class="flex items-center gap-2.5 shrink-0">
+        <div class="logo w-9 h-9 rounded-xl grid place-items-center">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="5" rx="1.5"/><path d="M6 13v6M18 13v6M8 4h8"/></svg>
+        </div>
+        <div class="leading-tight">
+          <div id="restaurant" class="font-semibold">TableSense</div>
+          <div class="text-[11px] text-slate-500">Weekly analytics</div>
+        </div>
+      </a>
+      <nav class="hidden md:flex items-center gap-1 text-sm ml-2">
+        <a href="/" class="nav-link">Floor</a>
+        <a href="/analytics" class="nav-link active">Analytics</a>
+        <a href="/setup" class="nav-link">Setup</a>
+      </nav>
+      <div class="flex-1"></div>
+      <div id="weeks" class="seg" role="group" aria-label="Date range">
+        <button data-weeks="1" class="on">This week</button>
+        <button data-weeks="2">2 weeks</button>
+        <button data-weeks="4">4 weeks</button>
+      </div>
+      <div class="flex gap-2">
+        <a id="csv-daily" class="btn-ghost" href="#" download>⬇ Daily CSV</a>
+        <a id="csv-events" class="btn-ghost" href="#" download>⬇ Raw events</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="px-3 sm:px-5 py-4 pb-24 md:pb-8 space-y-4 max-w-[1500px] mx-auto">
+    <div class="flex flex-wrap items-baseline justify-between gap-2">
+      <h1 class="text-xl font-semibold">Performance overview</h1>
+      <div id="range" class="text-sm text-slate-400"></div>
+    </div>
+
+    <!-- KPI tiles -->
+    <section id="kpis" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-7 gap-3"></section>
+
+    <!-- Revenue + staffing -->
+    <section class="grid gap-4 lg:grid-cols-5">
+      <div class="card lg:col-span-3" id="revenue-card">
+        <div class="card-head"><h2>Revenue impact</h2><span class="text-[11px] text-slate-500" id="rev-note"></span></div>
+        <div id="revenue"></div>
+      </div>
+      <div class="card lg:col-span-2">
+        <div class="card-head"><h2>Staffing recommendation</h2><span class="text-[11px] text-slate-500" id="staff-note"></span></div>
+        <div id="staffing"></div>
+      </div>
+    </section>
+
+    <!-- Heatmap -->
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Footfall by day &amp; hour</h2>
+          <p class="text-[11px] text-slate-500 mt-0.5">Average guests seated per hour</p>
+        </div>
+        <div id="heat-legend" class="flex items-center gap-2 text-[11px] text-slate-400"></div>
+      </div>
+      <div class="overflow-x-auto"><div id="heatmap" class="heatmap"></div></div>
+    </section>
+
+    <section class="grid gap-4 lg:grid-cols-2">
+      <div class="card chart-card">
+        <div class="card-head"><div><h2>Peak hours</h2><p class="sub">Average guests seated per hour of day</p></div><button class="btn-xs" data-table-for="peak">Table</button></div>
+        <div class="chart-box"><canvas id="peak"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <div class="card-head"><div><h2>Average table turn time</h2><p class="sub">Minutes from seating to table ready again</p></div><button class="btn-xs" data-table-for="turn">Table</button></div>
+        <div class="chart-box"><canvas id="turn"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <div class="card-head"><div><h2>Waiter response &amp; cleaning delay</h2><p class="sub">Daily average, minutes</p></div><button class="btn-xs" data-table-for="service">Table</button></div>
+        <div class="chart-box"><canvas id="service"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <div class="card-head"><div><h2>Alerts per day</h2><p class="sub">Waiter-needed and cleaning alerts raised</p></div><button class="btn-xs" data-table-for="alerts">Table</button></div>
+        <div class="chart-box"><canvas id="alerts"></canvas></div>
+      </div>
+    </section>
+
+    <section class="card chart-card">
+      <div class="card-head"><div><h2>Table utilisation</h2><p class="sub">Share of opening hours (11:00–23:30) each table was occupied</p></div><button class="btn-xs" data-table-for="util">Table</button></div>
+      <div class="chart-box chart-box-sm"><canvas id="util"></canvas></div>
+    </section>
+
+    <p id="error" class="hidden text-sm text-red-300"></p>
+  </main>
+
+  <div id="tip" class="viz-tip hidden"></div>
+
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 flex justify-around border-t border-white/5 bg-[#0b1120]/95 backdrop-blur py-2 text-xs">
+    <a href="/" class="text-slate-400">Floor</a><a href="/analytics" class="text-emerald-400">Analytics</a><a href="/setup" class="text-slate-400">Setup</a>
+  </nav>
+
+  <script src="/static/js/analytics.js"></script>
+</body>
+</html>

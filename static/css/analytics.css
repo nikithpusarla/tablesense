@@ -1,0 +1,53 @@
+/* Analytics page: chart tokens (dark surface, validated categorical slots 1-2). */
+:root {
+  --series-1: #3987e5;   /* blue   - waiter / primary single series */
+  --series-2: #d95926;   /* orange - cleaning */
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --grid: rgb(255 255 255 / 0.05);
+  --good: #0ca30c;
+}
+.sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-weight: 400; }
+.chart-box { position: relative; height: 260px; }
+.chart-box-sm { height: 220px; }
+.data-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+.data-table th, .data-table td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.data-table th:first-child, .data-table td:first-child { text-align: left; }
+.data-table th { color: var(--text-secondary); font-weight: 500; position: sticky; top: 0; background: var(--card); }
+.table-wrap { max-height: 260px; overflow: auto; }
+
+/* KPI tiles */
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.kpi .k-label { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+.kpi .k-value { font-size: 26px; font-weight: 700; line-height: 1.15; margin-top: 4px; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+.kpi .k-unit { font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-left: 2px; }
+.kpi .k-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* Heatmap */
+.heatmap { display: grid; grid-template-columns: 44px repeat(13, minmax(38px, 1fr)); gap: 3px; min-width: 600px; }
+.heatmap .hlabel { font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; }
+.heatmap .hhead { font-size: 10.5px; color: var(--text-muted); text-align: center; padding-bottom: 2px; }
+.heatmap .cell { height: 30px; border-radius: 4px; cursor: default; transition: outline-color .1s; outline: 2px solid transparent; outline-offset: 1px; }
+.heatmap .cell:hover { outline-color: var(--text-primary); }
+.heat-scale { display: flex; gap: 2px; }
+.heat-scale i { width: 18px; height: 10px; border-radius: 2px; display: block; }
+
+.viz-tip { position: fixed; z-index: 60; pointer-events: none; background: #1b2540; border: 1px solid rgb(255 255 255 / .1); border-radius: 8px;
+           padding: 6px 9px; font-size: 12px; color: var(--text-primary); box-shadow: 0 8px 24px rgb(0 0 0 / .4); }
+
+/* Revenue card */
+.hero { font-size: 40px; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.cmp { width: 100%; font-size: 13px; border-collapse: collapse; }
+.cmp th { font-size: 11px; color: var(--text-secondary); font-weight: 500; text-align: right; padding: 4px 6px; }
+.cmp th:first-child, .cmp td:first-child { text-align: left; }
+.cmp td { padding: 7px 6px; text-align: right; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.delta-good { color: #4ade80; font-weight: 600; }
+.delta-bad { color: #fca5a5; font-weight: 600; }
+
+.staff-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 6px; align-items: stretch; }
+.staff-grid .h { font-size: 11px; color: var(--text-secondary); font-weight: 500; padding: 0 4px; }
+.staff-cell { background: rgb(255 255 255 / .03); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.staff-cell .n { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.waiter-dots { display: flex; gap: 3px; margin-top: 4px; }
+.waiter-dots i { width: 8px; height: 8px; border-radius: 99px; background: var(--series-1); display: block; }

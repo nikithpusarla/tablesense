@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1120" />
+  <title>TableSense — Live Floor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" />
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ["Inter", "system-ui", "sans-serif"], mono: ["JetBrains Mono", "ui-monospace", "monospace"] } } } };
+  </script>
+  <link rel="stylesheet" href="./css/app.css" />
+</head>
+<body class="bg-[#0b1120] text-slate-200 antialiased min-h-screen">
+  <div style="background:#1e293b;color:#cbd5e1;font:500 12px Inter,system-ui,sans-serif;text-align:center;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.06)">🧪 Live demo: a simulated 16-table restaurant running entirely in your browser. No camera and no server. The installed version connects to your existing CCTV.</div>
+
+  <!-- ===================== Top bar ===================== -->
+  <header class="sticky top-0 z-30 border-b border-white/5 bg-[#0b1120]/90 backdrop-blur">
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 sm:px-5 py-2.5">
+      <a href="./index.html" class="flex items-center gap-2.5 shrink-0">
+        <div class="logo w-9 h-9 rounded-xl grid place-items-center">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="5" rx="1.5"/><path d="M6 13v6M18 13v6M8 4h8"/></svg>
+        </div>
+        <div class="leading-tight">
+          <div id="restaurant" class="font-semibold">TableSense</div>
+          <div class="text-[11px] text-slate-500">TableSense · floor control</div>
+        </div>
+      </a>
+      <span id="mode-badge" class="badge">—</span>
+      <span id="conn" class="flex items-center gap-1.5 text-xs text-slate-500"><i class="w-1.5 h-1.5 rounded-full bg-slate-500"></i>connecting</span>
+
+      <nav class="hidden md:flex items-center gap-1 text-sm ml-2">
+        <a href="./index.html" class="nav-link active">Floor</a>
+        <a href="./analytics.html" class="nav-link">Analytics</a>
+        <a href="./setup.html" class="nav-link">Setup</a>
+      </nav>
+
+      <div class="flex-1"></div>
+
+      <div id="counts" class="flex flex-wrap gap-1.5 text-xs order-last w-full sm:w-auto sm:order-none"></div>
+
+      <div id="speed-ctl" class="hidden seg" title="Simulation speed"></div>
+
+      <button id="sound-btn" class="btn-ghost" title="Alert sound & notifications">
+        <span id="sound-icon">🔕</span><span id="sound-label" class="hidden sm:inline">Enable alerts</span>
+      </button>
+
+      <div class="text-right shrink-0">
+        <div id="clock" class="font-mono text-lg font-bold leading-tight tabular-nums">--:--:--</div>
+        <div id="clock-sub" class="text-[11px] text-slate-500 leading-tight"></div>
+      </div>
+    </div>
+  </header>
+
+  <div id="notice" class="hidden mx-3 sm:mx-5 mt-3 rounded-xl border border-amber-400/30 bg-amber-400/10 text-amber-200 text-sm px-4 py-2.5"></div>
+
+  <!-- ===================== Layout ===================== -->
+  <main class="layout px-3 sm:px-5 py-4">
+    <!-- LEFT (60%) -->
+    <div class="col col-left">
+      <section class="card area-feed">
+        <div class="card-head">
+          <h2><span id="feed-title">Live feed</span><span id="feed-status" class="ml-2 text-[11px] font-normal text-slate-500"></span></h2>
+          <div class="flex items-center gap-3 text-[11px] text-slate-400">
+            <span class="legend"><i style="background:#22c55e"></i>Free</span>
+            <span class="legend"><i style="background:#ef4444"></i>Waiting</span>
+            <span class="legend"><i style="background:#f97316"></i>Served</span>
+            <span class="legend"><i style="background:#eab308"></i>Cleaning</span>
+          </div>
+        </div>
+        <div class="relative bg-black rounded-lg overflow-hidden">
+          <canvas id="feed" width="1120" height="680" class="w-full h-auto block" aria-label="Simulated restaurant floor plan"></canvas>
+          <div id="feed-offline" class="hidden absolute inset-0 grid place-items-center text-sm text-slate-400 bg-black/70">Reconnecting video…</div>
+        </div>
+      </section>
+
+      <div class="host-row">
+        <section class="card area-queue">
+          <div class="card-head">
+            <h2>Host queue</h2>
+            <span id="queue-count" class="pill">0 waiting</span>
+          </div>
+          <form id="queue-form" class="flex gap-2 mb-3" autocomplete="off">
+            <input id="q-name" class="input flex-1 min-w-0" placeholder="Party name" maxlength="40" />
+            <div class="stepper">
+              <button type="button" data-step="-1" aria-label="fewer">−</button>
+              <input id="q-size" type="number" min="1" max="20" value="2" aria-label="Party size" />
+              <button type="button" data-step="1" aria-label="more">+</button>
+            </div>
+            <button class="btn-primary shrink-0" type="submit">Add</button>
+          </form>
+          <ul id="queue" class="space-y-1.5 max-h-80 overflow-y-auto pr-1"></ul>
+        </section>
+
+        <section class="card area-next">
+          <div class="card-head">
+            <h2>Freeing up next</h2>
+            <span class="text-[11px] text-slate-500">based on history</span>
+          </div>
+          <ul id="next" class="space-y-1.5"></ul>
+        </section>
+      </div>
+    </div>
+
+    <!-- RIGHT (40%) -->
+    <div class="col col-right">
+      <section class="card area-alerts">
+        <div class="card-head">
+          <h2>Alerts <span id="alert-count" class="pill ml-1">0</span></h2>
+          <button id="ack-all" class="text-xs text-slate-400 hover:text-white hidden">Acknowledge all</button>
+        </div>
+        <ul id="alerts" class="space-y-2"></ul>
+      </section>
+
+      <section class="card area-tables">
+        <div class="card-head">
+          <h2>Floor map</h2>
+          <div id="filters" class="seg seg-sm">
+            <button data-filter="all" class="on">All</button>
+            <button data-filter="SEATED_WAITING">Waiting</button>
+            <button data-filter="NEEDS_CLEANING">Cleaning</button>
+            <button data-filter="FREE">Free</button>
+          </div>
+        </div>
+        <div id="tables" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+      </section>
+
+      <section class="card area-activity">
+        <div class="card-head"><h2>Activity</h2></div>
+        <ul id="activity" class="text-xs space-y-1.5 max-h-56 overflow-y-auto pr-1"></ul>
+      </section>
+    </div>
+  </main>
+
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 flex justify-around border-t border-white/5 bg-[#0b1120]/95 backdrop-blur py-2 text-xs">
+    <a href="./index.html" class="text-emerald-400">Floor</a><a href="./analytics.html" class="text-slate-400">Analytics</a><a href="./setup.html" class="text-slate-400">Setup</a>
+  </nav>
+
+  <!-- Toasts -->
+  <div id="toasts" class="fixed top-16 right-3 z-50 flex flex-col gap-2 w-[min(360px,calc(100vw-24px))]"></div>
+
+  <!-- Table detail modal -->
+  <div id="modal" class="fixed inset-0 z-40 hidden items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4">
+    <div class="w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl bg-[#111a2e] border border-white/10 p-5 shadow-2xl">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 id="m-title" class="text-xl font-semibold">Table</h3>
+          <div id="m-state" class="mt-1"></div>
+        </div>
+        <button id="m-close" class="text-slate-400 hover:text-white text-3xl leading-none" aria-label="Close">&times;</button>
+      </div>
+      <div id="m-timer" class="font-mono text-4xl font-bold mt-3 tabular-nums">00:00</div>
+      <dl id="m-body" class="mt-3 grid grid-cols-2 gap-y-2 text-sm"></dl>
+      <div class="mt-5 grid gap-2">
+        <button id="m-ack" class="hidden w-full rounded-lg bg-slate-700 hover:bg-slate-600 py-2.5 font-semibold">Acknowledge alert</button>
+        <button id="m-clean" class="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 py-2.5 font-semibold">Mark clean</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/demo-sim.js"></script>
+  <script src="./js/demo-shim.js"></script>
+  <script src="./js/sound.js"></script>
+  <script src="./js/dashboard.js"></script>
+</body>
+</html>
